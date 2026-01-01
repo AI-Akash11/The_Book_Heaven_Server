@@ -33,7 +33,16 @@ async function run() {
     await client.connect();
 
 
+    const db = client.db('book_heaven_db');
+    const booksCollection = db.collection('books');
 
+    // books get api----------------------------------------
+    app.get('/books', async(req, res)=>{
+        const result = await booksCollection.find().toArray();
+        res.send(result)
+    })
+
+    
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
@@ -52,5 +61,5 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Server running on port ${port}`)
 })
