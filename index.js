@@ -31,7 +31,7 @@ async function run() {
 
     // books api----------------------------------------
     // all bokks get api
-    app.get("/books", async (req, res) => {
+    app.get("/all-books", async (req, res) => {
       const result = await booksCollection.find().toArray();
       res.send(result);
     });
@@ -42,6 +42,15 @@ async function run() {
         const query = {_id: new ObjectId(id)}
 
         const result = await booksCollection.findOne(query);
+        res.send(result)
+    })
+
+    // my books api
+    app.get('/my-books', async (req, res)=>{
+        const email = req.query.email;
+        const query = {userEmail : email}
+
+        const result = await booksCollection.find(query).toArray();
         res.send(result)
     })
 
