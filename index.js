@@ -72,6 +72,19 @@ async function run() {
       res.send(result)
     })
 
+    // book update api--------------------------------------------
+    app.patch('/update-book/:id', async(req, res)=>{
+      const id= req.params.id;
+      const updateData = req.body;
+
+      const query = {_id: new ObjectId(id)}
+      const updatedDoc = {
+        $set: updateData
+      }
+      const result = await booksCollection.updateOne(query, updatedDoc);
+      res.send(result)
+    })
+
     // book delete api--------------------------------------------
     app.delete('/book/:id', async(req, res)=>{
       const id = req.params.id;
