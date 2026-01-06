@@ -65,6 +65,13 @@ async function run() {
       res.send(result);
     });
 
+    // add-book post api
+    app.post('/add-book',async(req, res)=>{
+      const bookData = req.body;
+      const result = await booksCollection.insertOne(bookData);
+      res.send(result)
+    })
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
