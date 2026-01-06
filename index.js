@@ -32,7 +32,7 @@ async function run() {
     // books api----------------------------------------
     // all bokks get api
     app.get("/all-books", async (req, res) => {
-      const result = await booksCollection.find().toArray();
+      const result = await booksCollection.find().sort({ created_at: -1 }).toArray();
       res.send(result);
     });
 
@@ -50,7 +50,7 @@ async function run() {
         const email = req.query.email;
         const query = {userEmail : email}
 
-        const result = await booksCollection.find(query).toArray();
+        const result = await booksCollection.find(query).sort({ created_at: -1 }).toArray();
         res.send(result)
     })
 
@@ -65,10 +65,18 @@ async function run() {
       res.send(result);
     });
 
-    // add-book post api
+    // add-book post api------------------------------------
     app.post('/add-book',async(req, res)=>{
       const bookData = req.body;
       const result = await booksCollection.insertOne(bookData);
+      res.send(result)
+    })
+
+    // book delete api--------------------------------------------
+    app.delete('/book/:id', async(req, res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)}
+      const result = await booksCollection.deleteOne(query);
       res.send(result)
     })
 
