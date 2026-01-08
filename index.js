@@ -36,6 +36,13 @@ async function run() {
       res.send(result);
     });
 
+    // get featured book api
+    app.get('/featured-book',async (req, res) => {
+      const query = {rating: 5}
+      const result = await booksCollection.find(query).sort({ created_at: -1 }).limit(1).toArray();
+      res.send(result);
+    })
+
     // single book get api
     app.get('/book/:id', async(req, res)=>{
         const id = req.params.id;
