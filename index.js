@@ -108,6 +108,17 @@ async function run() {
 
     // comments api--------------------------------------------------------------
 
+    // comment get api
+    app.get('/comments/:id',async(req, res)=>{
+      const id = req.params.id;
+      const query = {bookId: id}
+      
+      const result = await commentsCollection.find(query).sort({created_at: -1}).toArray();
+
+      res.send(result)
+    })
+
+    // comment post api
     app.post('/comments', async(req, res)=>{
       const commentData = req.body;
       commentData.created_at = new Date();
