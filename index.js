@@ -28,6 +28,7 @@ async function run() {
 
     const db = client.db("book_heaven_db");
     const booksCollection = db.collection("books");
+    const commentsCollection = db.collection("comments");
 
     // books api----------------------------------------
     // all bokks get api
@@ -99,6 +100,33 @@ async function run() {
       const result = await booksCollection.deleteOne(query);
       res.send(result)
     })
+
+
+
+
+
+
+    // comments api--------------------------------------------------------------
+
+    app.post('/comments', async(req, res)=>{
+      const commentData = req.body;
+      commentData.created_at = new Date();
+
+      const result = await commentsCollection.insertOne(commentData);
+      res.send(result)
+
+    })
+
+
+
+
+
+
+
+
+
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
