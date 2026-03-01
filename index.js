@@ -1,10 +1,10 @@
 const express = require("express");
 const cors = require("cors");
-const app = express();
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
-const port = process.env.PORT || 3000;
+// express app for vercel serverless
+const app = express();
 
 // middleware
 app.use(express.json());
@@ -21,141 +21,136 @@ const client = new MongoClient(uri, {
   },
 });
 
-async function run() {
-  try {
-    // Connect the client to the server	(optional starting in v4.7)
+// cached collections so that we don't reconnect on every invocation
+let booksCollection;
+let commentsCollection;
+
+async function initDb() {
+  if (!booksCollection || !commentsCollection) {
     await client.connect();
-
     const db = client.db("book_heaven_db");
-    const booksCollection = db.collection("books");
-    const commentsCollection = db.collection("comments");
-
-    // books api----------------------------------------
-    // all bokks get api
-    app.get("/all-books", async (req, res) => {
-      const result = await booksCollection.find().sort({ created_at: -1 }).toArray();
-      res.send(result);
-    });
-
-    // get featured book api
-    app.get('/featured-book',async (req, res) => {
-      const query = {rating: 5}
-      const result = await booksCollection.find(query).sort({ created_at: -1 }).limit(1).toArray();
-      res.send(result);
-    })
-
-    // single book get api
-    app.get('/book/:id', async(req, res)=>{
-        const id = req.params.id;
-        const query = {_id: new ObjectId(id)}
-
-        const result = await booksCollection.findOne(query);
-        res.send(result)
-    })
-
-    // my books api
-    app.get('/my-books', async (req, res)=>{
-        const email = req.query.email;
-        const query = {userEmail : email}
-
-        const result = await booksCollection.find(query).sort({ created_at: -1 }).toArray();
-        res.send(result)
-    })
-
-
-    // latest-books api----------------------------------
-    app.get("/latest-books", async (req, res) => {
-      const result = await booksCollection
-        .find()
-        .sort({ created_at: -1 })
-        .limit(6)
-        .toArray();
-      res.send(result);
-    });
-
-    // add-book post api------------------------------------
-    app.post('/add-book',async(req, res)=>{
-      const bookData = req.body;
-      const result = await booksCollection.insertOne(bookData);
-      res.send(result)
-    })
-
-    // book update api--------------------------------------------
-    app.patch('/update-book/:id', async(req, res)=>{
-      const id= req.params.id;
-      const updateData = req.body;
-
-      const query = {_id: new ObjectId(id)}
-      const updatedDoc = {
-        $set: updateData
-      }
-      const result = await booksCollection.updateOne(query, updatedDoc);
-      res.send(result)
-    })
-
-    // book delete api--------------------------------------------
-    app.delete('/book/:id', async(req, res)=>{
-      const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
-      const result = await booksCollection.deleteOne(query);
-      res.send(result)
-    })
-
-
-
-
-
-
-    // comments api--------------------------------------------------------------
-
-    // comment get api
-    app.get('/comments/:id',async(req, res)=>{
-      const id = req.params.id;
-      const query = {bookId: id}
-      
-      const result = await commentsCollection.find(query).sort({created_at: -1}).limit(10).toArray();
-
-      res.send(result)
-    })
-
-    // comment post api
-    app.post('/comments', async(req, res)=>{
-      const commentData = req.body;
-      commentData.created_at = new Date();
-
-      const result = await commentsCollection.insertOne(commentData);
-      res.send(result)
-
-    })
-
-    // comment delete api
-    app.delete('/comments/:id', async(req, res)=>{
-      const id = req.params.id;
-      const query = {_id: new ObjectId(id)}
-
-      const result = await commentsCollection.deleteOne(query)
-      res.send(result)
-    })
-
-
-
-
-    // Send a ping to confirm a successful connection
-    // await client.db("admin").command({ ping: 1 });
-    // console.log(
-    //   "Pinged your deployment. You successfully connected to MongoDB!"
-    // );
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+    booksCollection = db.collection("books");
+    commentsCollection = db.collection("comments");
   }
 }
-run().catch(console.dir);
 
+// books api----------------------------------------
+// all books
+app.get("/all-books", async (req, res) => {
+  await initDb();
+  const result = await booksCollection.find().sort({ created_at: -1 }).toArray();
+  res.send(result);
+});
+
+// featured book
+app.get("/featured-book", async (req, res) => {
+  await initDb();
+  const query = { rating: 5 };
+  const result = await booksCollection
+    .find(query)
+    .sort({ created_at: -1 })
+    .limit(1)
+    .toArray();
+  res.send(result);
+});
+
+// single book
+app.get("/book/:id", async (req, res) => {
+  await initDb();
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await booksCollection.findOne(query);
+  res.send(result);
+});
+
+// my books
+app.get("/my-books", async (req, res) => {
+  await initDb();
+  const email = req.query.email;
+  const query = { userEmail: email };
+  const result = await booksCollection
+    .find(query)
+    .sort({ created_at: -1 })
+    .toArray();
+  res.send(result);
+});
+
+// latest books
+app.get("/latest-books", async (req, res) => {
+  await initDb();
+  const result = await booksCollection
+    .find()
+    .sort({ created_at: -1 })
+    .limit(6)
+    .toArray();
+  res.send(result);
+});
+
+// add book
+app.post("/add-book", async (req, res) => {
+  await initDb();
+  const bookData = req.body;
+  const result = await booksCollection.insertOne(bookData);
+  res.send(result);
+});
+
+// update book
+app.patch("/update-book/:id", async (req, res) => {
+  await initDb();
+  const id = req.params.id;
+  const updateData = req.body;
+  const query = { _id: new ObjectId(id) };
+  const updatedDoc = { $set: updateData };
+  const result = await booksCollection.updateOne(query, updatedDoc);
+  res.send(result);
+});
+
+// delete book
+app.delete("/book/:id", async (req, res) => {
+  await initDb();
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await booksCollection.deleteOne(query);
+  res.send(result);
+});
+
+// comments api--------------------------------------------------------------
+
+// get comments for a book
+app.get("/comments/:id", async (req, res) => {
+  await initDb();
+  const id = req.params.id;
+  const query = { bookId: id };
+  const result = await commentsCollection
+    .find(query)
+    .sort({ created_at: -1 })
+    .limit(10)
+    .toArray();
+  res.send(result);
+});
+
+// post a comment
+app.post("/comments", async (req, res) => {
+  await initDb();
+  const commentData = req.body;
+  commentData.created_at = new Date();
+  const result = await commentsCollection.insertOne(commentData);
+  res.send(result);
+});
+
+// delete a comment
+app.delete("/comments/:id", async (req, res) => {
+  await initDb();
+  const id = req.params.id;
+  const query = { _id: new ObjectId(id) };
+  const result = await commentsCollection.deleteOne(query);
+  res.send(result);
+});
+
+// root
 app.get("/", (req, res) => {
   res.send("The Book Heaven Is Online!");
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+// export for vercel
+module.exports = app;
